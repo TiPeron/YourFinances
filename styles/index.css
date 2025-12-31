@@ -1,0 +1,167 @@
+body {
+  padding: 0;
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+header > h1 {
+  font-size: 23px;
+  text-align: center;
+  margin-top: 40px;
+  color: #0a1c2d;
+}
+
+.welcoming {
+  color: #002a51;
+  margin-left: 23px;
+  margin-top: 30px;
+}
+
+.news {
+  height: 150px;
+  margin: 40px 20px 40px 20px;
+  border-radius: 12px;
+  background-color: #003d75;
+  padding-bottom: 7px;
+}
+
+.saiba-mais-news-container {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.saiba-mais-news {
+  all: unset;
+  color: white;
+  margin-left: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.saiba-mais-icon {
+  height: 10px;
+  width: auto;
+}
+
+.title-news {
+  display: flex;
+}
+
+.icon-news {
+  height: 35px;
+  width: auto;
+  margin-top: 10px;
+  margin-left: 10px;
+}
+
+.title-news > h1 {
+  font-size: 20px;
+  color: white;
+  margin-left: 7px;
+  margin-top: 15px;
+}
+
+.news-button-content > h1 {
+  font-size: 15px;
+  color: white;
+  margin-left: 20px;
+  margin-top: 2px;
+}
+
+.news-button-content > h2 {
+  font-size: 13px;
+  color: #ccd6e0;
+  margin-left: 20px;
+  margin-top: -2px;
+}
+
+.evolucao-da-receita {
+  height: 150px;
+  margin: 0px 20px 0px 20px;
+  border-radius: 12px;
+  background-color: #b7dcfe;
+  padding-bottom: 20px;
+}
+
+.saiba-mais-receita-container {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.saiba-mais-receita {
+  all: unset;
+  color: #001d39;
+  margin-left: 20px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.title-receita {
+  display: flex;
+}
+
+.icon-receita {
+  height: 35px;
+  width: auto;
+  margin-top: 10px;
+  margin-left: 10px;
+}
+
+.title-receita > h1 {
+  font-size: 20px;
+  color: #001d39;
+  margin-left: 10px;
+  margin-top: 15px;
+}
+
+.receita-button-content > h1 {
+  font-size: 20px;
+  color: #001d39;
+  margin-left: 20px;
+  margin-top: 20px;
+  margin-bottom: 45px;
+}
+
+.news-button-content > h2 {
+  font-size: 13px;
+  color: #ccd6e0;
+  margin-left: 20px;
+  margin-top: -2px;
+}
+
+footer {
+  position: fixed;
+  display: flex;
+  background-color: #0a4174;
+  height: 80px;
+  width: 100%;
+  justify-content: space-around;
+  flex-shrink: 0;
+  bottom: 0;
+  z-index: 100;
+  border-radius: 25px 25px 0px 0px;
+}
+
+footer > div {
+  text-align: center;
+  margin-top: 15px;
+}
+
+footer > div > img,
+footer > div > a > img {
+  height: 25px;
+  width: auto;
+}
+
+footer > div > h1,
+footer > div > a > h1 {
+  font-size: 15px;
+  color: white;
+}
