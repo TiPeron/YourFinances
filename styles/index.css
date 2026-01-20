@@ -9,6 +9,10 @@ main {
   flex: 1 0 auto;
 }
 
+a {
+  text-decoration: none;
+}
+
 header > h1 {
   font-size: 23px;
   text-align: center;
