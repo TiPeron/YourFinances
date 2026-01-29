@@ -3,6 +3,13 @@ from sqlite3 import Error
 from pathlib import Path
 from hashlib import sha256
 import os
+from flask import jsonify
+
+
+#No bd fnctions
+def hashing(password ,salt):
+    password_hash = sha256(salt + password.encode('utf-8')).hexdigest()
+    return password_hash
 
 # this function create a database connection
 def connectDB():
@@ -31,10 +38,6 @@ def createTable(connection):
     except Error as ex:
         print(ex)
 
-def hashing(password ,salt):
-    password_hash = sha256(salt + password.encode('utf-8')).hexdigest()
-    return password_hash
-
 def createAccount(name, password, connection):
     salt = os.urandom(16)
     salt_hex = salt.hex() # para reconstruir o salt "salt = bytes.fromhex(salt_hex)"
@@ -48,32 +51,59 @@ def createAccount(name, password, connection):
         cursor = connection.cursor()
         cursor.execute(vsql)
         connection.commit()
-        print("Register complete")
+        return True, 201, "CREATED"
     except Error as ex:
         print(ex)
+        if str(ex) == 'UNIQUE constraint failed: user_login.name':
+            return False, 209, "USERNAME_ALREADY_EXISTS"
+        else:
+            return False, 500, "unknown error"
 
 def login(name, password, connection):
-    cursor = connection.cursor()
     vsql = f"""SELECT * FROM user_login WHERE name = '{name}'"""
-    cursor.execute(vsql)
 
-    result = cursor.fetchone()
+    try:
+        cursor = connection.cursor()
+        cursor.execute(vsql)
 
-    #Recover the salt
-    salt_hex = result[3]
-    salt = bytes.fromhex(salt_hex)
+        result = cursor.fetchone()
 
-    #Create the hash
-    password_hash = hashing(password, salt)
+        #Recover the salt
+        salt_hex = result[3]
+        salt = bytes.fromhex(salt_hex)
 
-    #Verify the Hash
-    if(password_hash == result[2]):
-        print("Login efetuado com sucesso")
-    else:
-        print("Senha ou Usuário incorreto")
+        #Create the hash
+        password_hash = hashing(password, salt)
+
+        #Verify the Hash
+        if(password_hash == result[2]):
+            return True, 200, "Login successful"
+        else:
+            return False, 401, "Unauthorized"
+    except Error as ex:
+        print(ex)
+        return False, 500, "unknown error"
+
     
+def deleteAccount(name, connection):
+    vsql = f"""DELETE FROM user_login WHERE name = '{name}'"""
+    #LEMBRAR DE CONNECTION.COMMIT
+    try:
+        cursor = connection.cursor()
+        cursor.execute(vsql)
+        connection.commit()
+        if cursor.rowcount == 0:
+            return False, 404, "Account not found"
+        else:
+            return True, 200, "Account successfully deleted" 
+    except Error as ex:
+        print(ex)
+        return False, 500, "unknown error"
+
 
 # Main
 vcon = connectDB()
 #connection name passowrd
-login('user1', 'password1', vcon)
+
+status = deleteAccount("user1",vcon)
+print(status)
