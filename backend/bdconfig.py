@@ -53,10 +53,10 @@ def createAccount(name, password, connection):
         connection.commit()
         return True, 201, "CREATED"
     except Error as ex:
-        print(ex)
         if str(ex) == 'UNIQUE constraint failed: user_login.name':
             return False, 209, "USERNAME_ALREADY_EXISTS"
         else:
+            print(ex)
             return False, 500, "unknown error"
 
 def login(name, password, connection):
@@ -67,7 +67,8 @@ def login(name, password, connection):
         cursor.execute(vsql)
 
         result = cursor.fetchone()
-
+        if result == None:
+            return False, 401, "Unauthorized"
         #Recover the salt
         salt_hex = result[3]
         salt = bytes.fromhex(salt_hex)
@@ -100,10 +101,9 @@ def deleteAccount(name, connection):
         print(ex)
         return False, 500, "unknown error"
 
-
 # Main
 vcon = connectDB()
 #connection name passowrd
 
-status = deleteAccount("user1",vcon)
+status = deleteAccount("Gabriel", vcon)
 print(status)
