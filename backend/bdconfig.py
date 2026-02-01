@@ -5,9 +5,16 @@ from sqlite3 import Error
 from pathlib import Path
 from hashlib import sha256
 from os import urandom
-from flask import jsonify
+from flask import request, jsonify
+from flask import Flask
+from flask_cors import CORS
 
+app = Flask(__name__)
+CORS(app)
 
+@app.route('/')
+def teste():
+    return 'testando rotas'
 #No bd functions
 
 #Create a new salt
@@ -48,7 +55,14 @@ def createTable(connection):
     except Error as ex:
         print(ex)
 
-def createAccount(name, password, connection):
+@app.route('/createAccount', methods=["POST"])
+def createAccount():
+
+    data = request.get_json()
+    
+    name = data["name"]
+    password = data["password"]
+
     salt = createSalt();
 
     vsql = f"""INSERT INTO user_login(name, password, salt) VALUES (
@@ -57,16 +71,17 @@ def createAccount(name, password, connection):
     """
 
     try: 
+        connection = connectDB()
         cursor = connection.cursor()
         cursor.execute(vsql)
         connection.commit()
-        return True, 201, "CREATED"
+        return jsonify({"status": "CREATED"}), 201
     except Error as ex:
         if str(ex) == 'UNIQUE constraint failed: user_login.name':
-            return False, 209, "USERNAME_ALREADY_EXISTS"
+            return jsonify({"status": "USERNAME_ALREADY_EXISTS"}), 209
         else:
             print(ex)
-            return False, 500, "unknown error"
+            return jsonify({"status": "UNKNOWN_ERROR"}), 500
 
 def authenticateAccount(name, password, connection):
     vsql = f"""SELECT * FROM user_login WHERE name = '{name}'"""
@@ -152,16 +167,24 @@ def updateUser(id, oldPassword, newName, newPassword, connection):
             cursor.execute(vsql)
             connection.commit()
             return True, 200, "updated successfully"
-
+        else:
+            return status
     except Error as ex:
         print(ex)
         return False, 500, "unknown error"
 # 
 
 # Main
-vcon = connectDB()
+
 #connection name passowrd
 
-# status = login(3, '123', 'teste2', '1234', vcon)
-status = authenticateAccount('teste2', '1234', vcon)
-print(status)
+# status = authenticateAccount('teste3', '12345', connection)
+# print(status)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+    
+# C - CREATE = createAccount() v
+# R - READ = authenticateAccount()
+# U - UPDATE = updateUser()
+# D - DELETE = deleteAccount()

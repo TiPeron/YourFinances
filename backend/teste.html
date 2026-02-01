@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>TESTE CRIAR CONTA</h1>
+    <input type="text" id="name" placeholder="Nome">
+    <input type="password" id="password" placeholder="Senha">
+    <button onclick="createAccount()">Criar conta</button>
+    <p id="result"></p>
+</body>
+<script>
+    function createAccount() {
+    const name = document.getElementById("name").value;
+    const password = document.getElementById("password").value;
+
+  fetch("http://127.0.0.1:5000/createAccount", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: name,
+      password: password
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    document.getElementById("result").innerText =
+      JSON.stringify(data);
+  })
+  .catch(err => {
+    console.error(err);
+  });
+}
+</script>
+</html>
