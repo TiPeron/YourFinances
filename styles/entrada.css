@@ -1,0 +1,53 @@
+*{
+    padding: 0;
+    margin: 0;
+}
+body{
+    font-family: "Inter", sans-serif;
+}
+.fundo{
+    background-repeat:no-repeat ;
+    filter: brightness(50%);
+    
+}
+footer{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 300px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-self: flex-end;
+    flex-direction: column;
+    border-radius: 0px 40px 0px 0px;
+    
+    
+}
+.seta{
+    text-decoration: none;
+    color: black;
+    display: flex;
+    font-size: 20px;
+    margin-left: 60%;
+    margin-top: 5%;
+    font-weight: bold;
+    
+}
+.entrada{
+    background-color: #0a4174;
+    font-size: 35px;
+    color:white;
+    border-radius: 10px;
+    box-shadow: none;
+    width: 80%;
+    margin-top: 5%;
+    height: 70px;
+}
+.frase{
+    font-size: 30px;
+    margin-top: 10%;
+    max-width: 400px;
+    font-weight: bold;
+}
