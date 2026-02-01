@@ -78,7 +78,7 @@ def createAccount():
         return jsonify({"status": "CREATED"}), 201
     except Error as ex:
         if str(ex) == 'UNIQUE constraint failed: user_login.name':
-            return jsonify({"status": "USERNAME_ALREADY_EXISTS"}), 209
+            return jsonify({"status": "USERNAME_ALREADY_EXISTS"}), 409
         else:
             print(ex)
             return jsonify({"status": "UNKNOWN_ERROR"}), 500
