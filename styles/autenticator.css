@@ -43,7 +43,10 @@ header > a > img{
     opacity: 0.8;
     padding-bottom: 10px;
     padding-left: 15px;
+    color: white;
+    background: none;
 }
+
 
 input::placeholder{
     color: #fafafa;
