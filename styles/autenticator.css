@@ -36,7 +36,6 @@ header > a > img {
   margin: 30px 30px 15px 30px;
 }
 
-<<<<<<< HEAD
 .entradas > input {
   all: unset;
   font-size: 20px;
@@ -50,23 +49,6 @@ header > a > img {
 input::placeholder {
   color: #fafafa;
   opacity: 0.8;
-=======
-.entradas > input{
-    all: unset;
-    font-size: 20px;
-    border-bottom: 2px solid #fafafa;
-    opacity: 0.8;
-    padding-bottom: 10px;
-    padding-left: 15px;
-    color: white;
-    background: none;
-}
-
-
-input::placeholder{
-    color: #fafafa;
-    opacity: 0.8;
->>>>>>> b81f195461b52e155a60013a4e247c16b09cfd7c
 }
 
 .mandar {
