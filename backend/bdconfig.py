@@ -10,9 +10,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/')
-def teste():
-    return 'testando rotas'
 #No bd functions
 
 #Create a new salt
@@ -21,7 +18,7 @@ def createSalt():
     salt = urandom(16)
     return salt
 
-#Create a hash
+#Create a hash in hexadecimal
 def hashing(password:str ,salt:bytes):
     password_hash = sha256(salt + password.encode('utf-8')).hexdigest()
     return password_hash
@@ -100,12 +97,21 @@ def authenticateAccount(name, password, connection):
 
         #Verify the Hash
         if(password_hash == result[2]):
-            return True, 200, "Login successful"
+            return jsonify({
+                "status": "SUCCESS",
+                "message": "Login successful"
+            }), 200
         else:
-            return False, 401, "Unauthorized"
+            return jsonify({
+                "status": "ERROR",
+                "message": "Unauthorized"
+            }), 401
     except Error as ex:
         print(ex)
-        return False, 500, "unknown error"
+        return jsonify({
+            "status": "ERROR",
+            "message": "Unknown error"
+        }), 500
 
     
 def deleteAccount(id, connection):
@@ -116,12 +122,21 @@ def deleteAccount(id, connection):
         cursor.execute(vsql)
         connection.commit()
         if cursor.rowcount == 0:
-            return False, 404, "Account not found"
+            return jsonify({
+                "status": "ERROR",
+                "message": "Account not found"
+            }), 404
         else:
-            return True, 200, "Account successfully deleted" 
+            return jsonify({
+                "status": "SUCCESS",
+                "message": "Account successfully deleted"
+            }), 200
     except Error as ex:
         print(ex)
-        return False, 500, "unknown error"
+        return jsonify({
+            "status": "ERROR",
+            "message": "Unknown error"
+        }), 500
 
 def updateUser(id, oldPassword, newName, newPassword, connection):
     vsql = f"""SELECT name FROM user_login WHERE id_user = '{id}'"""
@@ -153,7 +168,10 @@ def updateUser(id, oldPassword, newName, newPassword, connection):
                 fields.append(f"salt = '{newSalt.hex()}'")
 
             if not fields:
-                return False, 400, "nothing to update"
+                return jsonify({
+                    "status": "ERROR",
+                    "message": "Nothing to update"
+                }), 400
             
             print(", ".join(fields))
 
@@ -164,12 +182,18 @@ def updateUser(id, oldPassword, newName, newPassword, connection):
                 """
             cursor.execute(vsql)
             connection.commit()
-            return True, 200, "updated successfully"
+            return jsonify({
+                "status": "SUCCESS",
+                "message": "Updated successfully"
+            }), 200
         else:
             return status
     except Error as ex:
         print(ex)
-        return False, 500, "unknown error"
+        return jsonify({
+            "status": "ERROR",
+            "message": "Unknown error"
+        }), 500
 # 
 
 # Main
