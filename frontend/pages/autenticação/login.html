@@ -1,11 +1,54 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>login</h1>
-</body>
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <link rel="stylesheet" href="../../styles/login.css" />
+  </head>
+  <body>
+    <header>
+      <a href="entrada.html">
+        <img src="../../img/seta-preta.png" alt="voltar" />
+      </a>
+      <h1>Entrar</h1>
+    </header>
+      
+        
+        <input class="email" type="text" id="email" name="email" placeholder="Email" />
+        
+        
+        <input class="senha" type="password" id="senha" name="senha" placeholder="Senha" />
+      <section class="mandar">
+       <footer>
+         <button type="submit">Entrar</button>
+       </footer>
+      </section>
+    </form>
+  </body>
+  <script>
+    const form = document.querySelector("form");
+
+    form.addEventListener("submit", async (e) => {
+        console.log("CLICOU");
+        
+      e.preventDefault(); // impede a página de recarregar
+
+      // pega os valores dos inputs
+      const data = {
+        name: document.getElementById("name").value,
+        password: document.getElementById("senha").value,
+      };
+
+      // envia para o backend
+      const response = await fetch("http://127.0.0.1:5000/createAccount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      alert(result.status); // mostra a resposta do servidor
+    });
+  </script>
 </html>
