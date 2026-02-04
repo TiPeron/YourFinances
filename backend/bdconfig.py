@@ -7,6 +7,8 @@ from flask import request, jsonify
 from flask import Flask
 from flask_cors import CORS
 
+# name, password, CNPJ ou cpf, email, telefone 
+
 app = Flask(__name__)
 CORS(app)
 
@@ -77,6 +79,8 @@ def createAccount():
         else:
             print(ex)
             return jsonify({"status": "UNKNOWN_ERROR"}), 500
+        
+
 
 def authenticateAccount(name, password, connection):
     vsql = f"""SELECT * FROM user_login WHERE name = '{name}'"""
@@ -113,7 +117,7 @@ def authenticateAccount(name, password, connection):
             "message": "Unknown error"
         }), 500
 
-    
+
 def deleteAccount(id, connection):
     vsql = f"""DELETE FROM user_login WHERE id_user = '{id}'"""
     #LEMBRAR DE CONNECTION.COMMIT
