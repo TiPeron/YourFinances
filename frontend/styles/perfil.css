@@ -1,0 +1,76 @@
+*{
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+}
+
+header{
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+header > h1{
+    color: #001324;
+    font-size: 25px;
+    margin-top: 30px;
+}
+
+section{
+    display: flex;
+    justify-content: center;
+}
+
+.card{
+    display: flex;
+    flex-direction: column;
+    background-color: #004483;
+    width: 50vh;
+    height: 350px;
+    border-radius: 12px;
+    margin-top: 40px;
+    align-items: center;
+}
+
+.card > img{
+    width: 130px;
+    height: 130px;
+    margin-top: 40px;
+}
+
+.card > .username{
+    color: white;
+    margin-top: 5px;
+    font-size: 25px;
+}
+
+.card > .function{
+    color: white;
+    opacity: 0.7;
+    font-size: 20px;
+}
+
+.infos{
+    display: flex;
+    justify-content: space-around;
+    margin-top: 30px;
+    align-items: stretch;
+}
+
+.infos > div{
+    color: white;
+    font-size: 9px;
+    text-align: center;
+}
+
+.type{
+    opacity: 0.7;
+}
+
+
+

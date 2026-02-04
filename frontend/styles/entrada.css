@@ -35,13 +35,13 @@ footer{
     font-weight: bold;
     
 }
-.entrada{
+a.entrada > input{
     background-color: #0a4174;
     font-size: 35px;
     color:white;
     border-radius: 10px;
     box-shadow: none;
-    width: 80%;
+    width: 60vh;
     margin-top: 5%;
     height: 70px;
 }
