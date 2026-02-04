@@ -6,6 +6,7 @@ from os import urandom
 from flask import request, jsonify
 from flask import Flask
 from flask_cors import CORS
+from validate import validateCPF
 
 # name, password, CNPJ ou cpf, email, telefone 
 
@@ -39,11 +40,14 @@ def connectDB():
     return con
 
 def createTable(connection):
-    sqlcode = """CREATE TABLE user_login(
-    id_user INTEGER PRIMARY KEY,
-    name TEXT(30) NOT NULL UNIQUE,
-    password CHAR(64) NOT NULL,
-    salt CHAR(32) NOT NULL
+    sqlcode = """CREATE TABLE user_login (
+        id_user  INTEGER    PRIMARY KEY,
+        email    TEXT (254) UNIQUE NOT NULL,
+        password CHAR (64)  NOT NULL,
+        salt     CHAR (32)  NOT NULL,
+        name     TEXT (30)  NOT NULL,
+        CNPJ     TEXT (15)  UNIQUE,
+        CPF      TEXT (15)  UNIQUE
     );
     """
     try:
@@ -56,14 +60,36 @@ def createTable(connection):
 def createAccount():
 
     data = request.get_json()
-    
+
     name = data["name"]
     password = data["password"]
+    # NONE for no info
+    cpf = data['cpf']
+    cnpj = data['cnpj']
+    email = data['email']
+    phone = data['phone']
+
+    #Checks if the user entered either a cpf or a cnpj
+    #FOR FUTURE: VALIDATE EMAIL AND PHONE 
+    if(cpf == None and cnpj == None):
+        return jsonify({
+            "status": "ERROR",
+            "message": "Please provide a CPF or CNPJ"
+        }), 400
+    
+    if(not validateCPF(cpf)):
+        return jsonify({
+            "status": "ERROR",
+            "message": "Invalid CPF"
+        }), 400
+
+    #There's no way to verify the CNPJ
+
 
     salt = createSalt();
 
-    vsql = f"""INSERT INTO user_login(name, password, salt) VALUES (
-            '{name}','{hashing(password, salt)}','{salt.hex()}' 
+    vsql = f"""INSERT INTO user_login(email, password, salt, name, CNPJ, CPF, phone) VALUES (
+            '{email}','{hashing(password, salt)}', '{salt.hex()}','{name}','{cnpj}','{cpf}','{phone}'
         )
     """
 
