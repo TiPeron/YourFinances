@@ -31,43 +31,46 @@ def connectDB():
     file_dir = Path(__file__).resolve().parent
     db_path = file_dir / "database" / "user.db"
 
-    con = None
-
     try:
         con = sqlite3.connect(db_path)
     except Error as ex:
         print(ex)
     return con
 
-def createTable(connection):
-    sqlcode = """CREATE TABLE user_login (
-        id_user  INTEGER    PRIMARY KEY,
-        email    TEXT (254) UNIQUE NOT NULL,
-        password CHAR (64)  NOT NULL,
-        salt     CHAR (32)  NOT NULL,
-        name     TEXT (30)  NOT NULL,
-        CNPJ     TEXT (15)  UNIQUE,
-        CPF      TEXT (15)  UNIQUE
-    );
-    """
-    try:
-        cursor = connection.cursor()
-        cursor.execute(sqlcode)
-    except Error as ex:
-        print(ex)
+def createTable():
+    file_dir = Path(__file__).resolve().parent
+    db_path = file_dir / "database" / "user.db"
+    if db_path.exists():
+        print("db alredy exists")
+        conn = connectDB()
+    else:
+        schema_path = file_dir / "database" / "schema.sql"
+        schema_code = open(schema_path, encoding= "utf-8").read()
+
+        conn = connectDB()
+        conn.execute('PRAGMA foreign_keys = ON;')
+        conn.executescript(schema_code)
+
+    # try:
+    #     cursor = connection.cursor()
+    #     cursor.execute(sqlcode)
+    # except Error as ex:
+    #     print(ex)
+
+createTable()
 
 @app.route('/createAccount', methods=["POST"])
 def createAccount():
 
     data = request.get_json()
 
-    name = data["name"]
-    password = data["password"]
+    name = data.get('name') or None
+    password = data.get('password') or None
     # NONE for no info
-    cpf = data['cpf']
-    cnpj = data['cnpj']
-    email = data['email']
-    phone = data['phone']
+    cpf = data.get('cpf') or None
+    cnpj = data.get('cnpj') or None
+    email = data.get('email') or None
+    phone = data.get('phone') or None
 
     #Checks if the user entered either a cpf or a cnpj
     #FOR FUTURE: VALIDATE EMAIL AND PHONE 
@@ -76,35 +79,90 @@ def createAccount():
             "status": "ERROR",
             "message": "Please provide a CPF or CNPJ"
         }), 400
-    
-    if(not validateCPF(cpf)):
-        return jsonify({
-            "status": "ERROR",
-            "message": "Invalid CPF"
-        }), 400
+    if (cpf):
+        if(not validateCPF(cpf)):
+            return jsonify({
+                "status": "ERROR",
+                "message": "Invalid CPF"
+            }), 400
 
     #There's no way to verify the CNPJ
 
 
     salt = createSalt();
 
-    vsql = f"""INSERT INTO user_login(email, password, salt, name, CNPJ, CPF, phone) VALUES (
-            '{email}','{hashing(password, salt)}', '{salt.hex()}','{name}','{cnpj}','{cpf}','{phone}'
-        )
+    vsql = """
+        INSERT INTO user_login
+        (email, password, salt, name, CNPJ, CPF, phone)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """
+
 
     try: 
         connection = connectDB()
         cursor = connection.cursor()
-        cursor.execute(vsql)
+        cursor.execute(
+            vsql,
+            (
+                email,
+                hashing(password, salt),
+                salt.hex(),
+                name,
+                cnpj,  # None → NULL
+                cpf,   # None → NULL
+                phone
+            )
+        )
         connection.commit()
-        return jsonify({"status": "CREATED"}), 201
+        return jsonify({
+                "status": "SUCCESS",
+                "message": "CREATED"
+            }), 201
     except Error as ex:
-        if str(ex) == 'UNIQUE constraint failed: user_login.name':
-            return jsonify({"status": "USERNAME_ALREADY_EXISTS"}), 409
-        else:
-            print(ex)
-            return jsonify({"status": "UNKNOWN_ERROR"}), 500
+        match str(ex):
+            # UNIQUE ERROR TRATMENT
+            case 'UNIQUE constraint failed: user_login.CPF':
+                message = "CPF alredy registered"
+                code = 409
+            
+            case 'UNIQUE constraint failed: user_login.CNPJ':
+                message = "EMAIL alredy registered"
+                code = 409
+            
+            case 'UNIQUE constraint failed: user_login.email':
+                message = "EMAIL alredy registered"
+                code = 409
+            
+            case 'UNIQUE constraint failed: user_login.phone':
+                message = "PHONE alredy registered"
+                code = 409
+            
+            # NOT NULL ERROR TRATMENT
+
+            case 'NOT NULL constraint failed: user_login.email':
+                message = "EMAIL cannot be null"
+                code = 400
+            
+            case 'NOT NULL constraint failed: user_login.password':
+                message = "PASSWORD cannot be null"
+                code = 400
+
+            case 'NOT NULL constraint failed: user_login.name':
+                message = "NAME cannot be null"
+                code = 400
+            
+            case _:
+                print(ex)
+
+                message = "Unknown error"
+                code = 500
+            
+        return jsonify({
+                    "status": "ERROR",
+                    "message": message
+                }), code
+    finally:
+        connection.close()
         
 
 
@@ -142,6 +200,9 @@ def authenticateAccount(name, password, connection):
             "status": "ERROR",
             "message": "Unknown error"
         }), 500
+    finally:
+        connection.close()
+
 
 
 def deleteAccount(id, connection):
@@ -167,6 +228,8 @@ def deleteAccount(id, connection):
             "status": "ERROR",
             "message": "Unknown error"
         }), 500
+    finally:
+        connection.close()
 
 def updateUser(id, oldPassword, newName, newPassword, connection):
     vsql = f"""SELECT name FROM user_login WHERE id_user = '{id}'"""
@@ -224,6 +287,8 @@ def updateUser(id, oldPassword, newName, newPassword, connection):
             "status": "ERROR",
             "message": "Unknown error"
         }), 500
+    finally:
+        connection.close()
 # 
 
 # Main
@@ -233,9 +298,11 @@ def updateUser(id, oldPassword, newName, newPassword, connection):
 # status = authenticateAccount('teste3', '12345', connection)
 # print(status)
 
+
 if __name__ == "__main__":
     app.run(debug=True)
-    
+
+
 # C - CREATE = createAccount() v
 # R - READ = authenticateAccount()
 # U - UPDATE = updateUser()
