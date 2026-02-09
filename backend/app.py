@@ -1,56 +1,13 @@
-import sqlite3
 from sqlite3 import Error
-from pathlib import Path
-from hashlib import sha256
-from os import urandom
 from flask import request, jsonify
 from flask import Flask
 from flask_cors import CORS
-from validate import validateCPF
-
-# name, password, CNPJ ou cpf, email, telefone 
+from utils.validate import validateCPF
+from database.connection import connectDB
+from utils.hashing import hashing, createSalt
 
 app = Flask(__name__)
 CORS(app)
-
-#No bd functions
-
-#Create a new salt
-#Return a hexadecimal element
-def createSalt():
-    salt = urandom(16)
-    return salt
-
-#Create a hash in hexadecimal
-def hashing(password:str ,salt:bytes):
-    password_hash = sha256(salt + password.encode('utf-8')).hexdigest()
-    return password_hash
-
-# this function create a database connection
-def connectDB():
-    file_dir = Path(__file__).resolve().parent
-    db_path = file_dir / "database" / "user.db"
-
-    try:
-        con = sqlite3.connect(db_path)
-    except Error as ex:
-        print(ex)
-    return con
-
-def createTable():
-    file_dir = Path(__file__).resolve().parent
-    db_path = file_dir / "database" / "user.db"
-    if db_path.exists():
-        print("db alredy exists")
-        conn = connectDB()
-    else:
-        schema_path = file_dir / "database" / "schema.sql"
-        schema_code = open(schema_path, encoding= "utf-8").read()
-
-        conn = connectDB()
-        conn.execute('PRAGMA foreign_keys = ON;')
-        conn.executescript(schema_code)
-
 
 @app.route('/createAccount', methods=["POST"])
 def createAccount():
@@ -96,9 +53,9 @@ def createAccount():
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """
 
-
+    connection = connectDB()
     try: 
-        connection = connectDB()
+        
         cursor = connection.cursor()
         cursor.execute(
             vsql,
@@ -123,8 +80,6 @@ def createAccount():
             "status":"ERROR",
             "message":"SOME DATA IS ALREADY IN USE"
         }), 409
-        pass
-            
         
     finally:
         connection.close()
@@ -204,11 +159,11 @@ def deleteAccount():
     vsql = "DELETE FROM user_login WHERE name = ?"
     
     AutenticateStatus = authenticateAccount(name, password)
-
+    connection = connectDB()
     match(AutenticateStatus):
         case 200:
             try:
-                connection = connectDB()
+                
                 cursor = connection.cursor()
                 cursor.execute(vsql, (name,))
                 connection.commit()
@@ -243,9 +198,9 @@ def updateAccount():
 
     authenticateStatus = authenticateAccount(oldName, oldPassword)
     print(authenticateStatus)
-    if authenticateStatus[1] == 200:
+    connection = connectDB()
+    if authenticateStatus == 200:
         try:
-            connection = connectDB()
             cursor = connection.cursor()
 
             #Params list: newName and NewPassword
@@ -297,19 +252,6 @@ def updateAccount():
             connection.close()
     else:
         return authenticateStatus
-    
-# 
-
-# Main
-
-#connection name passowrd
-
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-# C - CREATE = createAccount() v
-# R - READ = authenticateAccount()
-# U - UPDATE = updateUser()
-# D - DELETE = deleteAccount()
