@@ -51,30 +51,29 @@ def createTable():
         conn.execute('PRAGMA foreign_keys = ON;')
         conn.executescript(schema_code)
 
-    # try:
-    #     cursor = connection.cursor()
-    #     cursor.execute(sqlcode)
-    # except Error as ex:
-    #     print(ex)
-
-createTable()
 
 @app.route('/createAccount', methods=["POST"])
 def createAccount():
 
     data = request.get_json()
 
-    name = data.get('name') or None
-    password = data.get('password') or None
+    name = data.get('name')
+    password = data.get('password')
     # NONE for no info
-    cpf = data.get('cpf') or None
-    cnpj = data.get('cnpj') or None
-    email = data.get('email') or None
-    phone = data.get('phone') or None
+    cpf = data.get('cpf')
+    cnpj = data.get('cnpj') 
+    email = data.get('email') 
+    phone = data.get('phone')
+
+    if(not name or not email):
+        return jsonify({
+                "status":"ERROR",
+                "message": "MISSING FIELDS"
+            }), 400
 
     #Checks if the user entered either a cpf or a cnpj
     #FOR FUTURE: VALIDATE EMAIL AND PHONE 
-    if(cpf == None and cnpj == None):
+    if(not cpf and not cnpj):
         return jsonify({
             "status": "ERROR",
             "message": "Please provide a CPF or CNPJ"
@@ -108,8 +107,8 @@ def createAccount():
                 hashing(password, salt),
                 salt.hex(),
                 name,
-                cnpj,  # None → NULL
-                cpf,   # None → NULL
+                cnpj, 
+                cpf, 
                 phone
             )
         )
@@ -119,184 +118,191 @@ def createAccount():
                 "message": "CREATED"
             }), 201
     except Error as ex:
-        match str(ex):
-            # UNIQUE ERROR TRATMENT
-            case 'UNIQUE constraint failed: user_login.CPF':
-                message = "CPF alredy registered"
-                code = 409
-            
-            case 'UNIQUE constraint failed: user_login.CNPJ':
-                message = "EMAIL alredy registered"
-                code = 409
-            
-            case 'UNIQUE constraint failed: user_login.email':
-                message = "EMAIL alredy registered"
-                code = 409
-            
-            case 'UNIQUE constraint failed: user_login.phone':
-                message = "PHONE alredy registered"
-                code = 409
-            
-            # NOT NULL ERROR TRATMENT
-
-            case 'NOT NULL constraint failed: user_login.email':
-                message = "EMAIL cannot be null"
-                code = 400
-            
-            case 'NOT NULL constraint failed: user_login.password':
-                message = "PASSWORD cannot be null"
-                code = 400
-
-            case 'NOT NULL constraint failed: user_login.name':
-                message = "NAME cannot be null"
-                code = 400
-            
-            case _:
-                print(ex)
-
-                message = "Unknown error"
-                code = 500
-            
+        print(ex)
         return jsonify({
-                    "status": "ERROR",
-                    "message": message
-                }), code
+            "status":"ERROR",
+            "message":"SOME DATA IS ALREADY IN USE"
+        }), 409
+        pass
+            
+        
     finally:
         connection.close()
         
 
 
-def authenticateAccount(name, password, connection):
-    vsql = f"""SELECT * FROM user_login WHERE name = '{name}'"""
+def authenticateAccount(name, password):
+
+    if(not name or not password):
+        return 400
+
+    connection = connectDB()
+
+    vsql = "SELECT * FROM user_login WHERE name = ?"
 
     try:
         cursor = connection.cursor()
-        cursor.execute(vsql)
+        cursor.execute(vsql,(name,))
 
         result = cursor.fetchone()
+        
         if result == None:
-            return False, 401, "Unauthorized"
+            return 401
         #Recover the salt
-        salt_hex = result[3]
+        salt_hex = result[2]
         salt = bytes.fromhex(salt_hex)
 
         #Create the hash
         password_hash = hashing(password, salt)
 
         #Verify the Hash
-        if(password_hash == result[2]):
+        if(password_hash == result[1]):
+            return 200
+        else:
+            return 401
+    except Error as ex:
+        print(ex)
+        return 500
+
+    finally:
+        connection.close()
+
+@app.route('/Login', methods=['POST'])
+def Login():
+    data = request.json
+    name = data.get("name")
+    password = data.get("password")
+    
+    authenticateStatus = authenticateAccount(name, password)
+
+    match(authenticateStatus):
+        case 200:
             return jsonify({
                 "status": "SUCCESS",
-                "message": "Login successful"
-            }), 200
-        else:
+                "message": "LOGIN SUCCESSFUL"
+            }, 200)
+        case 401:
             return jsonify({
                 "status": "ERROR",
                 "message": "Unauthorized"
             }), 401
-    except Error as ex:
-        print(ex)
-        return jsonify({
-            "status": "ERROR",
-            "message": "Unknown error"
-        }), 500
-    finally:
-        connection.close()
+        case 400:
+            return jsonify({
+                "status":"ERROR",
+                "message": "MISSING FIELDS"
+            }), 400
 
 
+@app.route('/DeleteAccount', methods=['DELETE'])
+def deleteAccount():
 
-def deleteAccount(id, connection):
-    vsql = f"""DELETE FROM user_login WHERE id_user = '{id}'"""
-    #LEMBRAR DE CONNECTION.COMMIT
-    try:
-        cursor = connection.cursor()
-        cursor.execute(vsql)
-        connection.commit()
-        if cursor.rowcount == 0:
+    data = request.json
+
+    name = data.get('name')
+    password = data.get('password')
+
+    vsql = "DELETE FROM user_login WHERE name = ?"
+    
+    AutenticateStatus = authenticateAccount(name, password)
+
+    match(AutenticateStatus):
+        case 200:
+            try:
+                connection = connectDB()
+                cursor = connection.cursor()
+                cursor.execute(vsql, (name,))
+                connection.commit()
+                return jsonify({
+                    "status": "SUCCESS",
+                    "message": "Account successfully deleted"
+                }), 204
+            except Error as ex:
+                print(ex)
+                return jsonify({
+                    "status": "ERROR",
+                    "message": "INTERNAL-ERROR"
+                }), 500
+            finally:
+                connection.close()
+        case 401:
             return jsonify({
                 "status": "ERROR",
-                "message": "Account not found"
-            }), 404
-        else:
-            return jsonify({
-                "status": "SUCCESS",
-                "message": "Account successfully deleted"
-            }), 200
-    except Error as ex:
-        print(ex)
-        return jsonify({
-            "status": "ERROR",
-            "message": "Unknown error"
-        }), 500
-    finally:
-        connection.close()
+                "message": "Unauthorized"
+            }), 401
+        
 
-def updateUser(id, oldPassword, newName, newPassword, connection):
-    vsql = f"""SELECT name FROM user_login WHERE id_user = '{id}'"""
-    try:
+@app.route("/UpdateAccount", methods=["PUT"])
+def updateAccount():
 
-        cursor = connection.cursor()
-        cursor.execute(vsql)
+    data = request.json
 
-        result = cursor.fetchone()[0]
+    oldName = data.get('oldName')
+    oldPassword = data.get('oldPassword')
+    newName = data.get('newName')
+    newPassword = data.get('newPassword')
 
-        status = authenticateAccount(result, oldPassword, connection)
+    authenticateStatus = authenticateAccount(oldName, oldPassword)
+    print(authenticateStatus)
+    if authenticateStatus[1] == 200:
+        try:
+            connection = connectDB()
+            cursor = connection.cursor()
 
-        if status[0]:
             #Params list: newName and NewPassword
             params = []
             # SQL CommandsList
             fields = []
-            if(newName is not None):
-                fields.append(f"name = '{newName}'")
+            if(newName is not None and not newName == oldName):
+                fields.append(f"name = ?")
                 params.append(newName)
 
-            if(newPassword is not None):
+            if(newPassword is not None and not newPassword == oldPassword):
                 newSalt = createSalt()
                 newHash = hashing(newPassword, newSalt)
 
-                fields.append(f"password = '{newHash}'")
-                params.append(newPassword)
+                fields.append(f"password = ?")
+                params.append(newHash)
 
-                fields.append(f"salt = '{newSalt.hex()}'")
+                fields.append(f"salt = ?")
+                params.append(newSalt.hex())
 
             if not fields:
                 return jsonify({
                     "status": "ERROR",
                     "message": "Nothing to update"
                 }), 400
-            
-            print(", ".join(fields))
+
+            params.append(oldName)
 
             vsql = f"""
                     UPDATE user_login
                     SET {", ".join(fields)}
-                    WHERE id_user = {id}
+                    WHERE name = ?
                 """
-            cursor.execute(vsql)
+            print(vsql)
+            cursor.execute(vsql, tuple(params))
+            
             connection.commit()
             return jsonify({
                 "status": "SUCCESS",
                 "message": "Updated successfully"
             }), 200
-        else:
-            return status
-    except Error as ex:
-        print(ex)
-        return jsonify({
-            "status": "ERROR",
-            "message": "Unknown error"
-        }), 500
-    finally:
-        connection.close()
+        except Error as ex:
+            print(ex)
+            return jsonify({
+                "status": "ERROR",
+                "message": "INTERNAL-ERROR"
+            }), 500
+        finally:
+            connection.close()
+    else:
+        return authenticateStatus
+    
 # 
 
 # Main
 
 #connection name passowrd
-
-# status = authenticateAccount('teste3', '12345', connection)
-# print(status)
 
 
 if __name__ == "__main__":
